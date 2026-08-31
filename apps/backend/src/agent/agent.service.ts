@@ -106,61 +106,6 @@ export async function createSession(userId?: string): Promise<{ sessionId: strin
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export async function sendMessage(sessionId: string, userMessage: string): Promise<string> {
   const history = await loadHistory(sessionId);
 
