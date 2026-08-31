@@ -27,6 +27,13 @@ async function saveHistory(sessionId: string, history: Content[]): Promise<void>
     .where(eq(sessions.id, sessionId));
 }
 
+
+
+
+
+
+
+
 export async function createSession(userId?: string): Promise<{ sessionId: string }> {
   const [row] = await db
     .insert(sessions)
@@ -53,7 +60,7 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
 
   while (response.functionCalls && response.functionCalls.length > 0) {
     if (++iterations > MAX_TOOL_ITERATIONS) {
-      throw new Error('Agent exceeded max tool-call iterations — possible loop.');
+      throw new Error('Agent exceeded max tool-call iterations ï¿½ possible loop.');
     }
 
     const responseParts: Part[] = [];
