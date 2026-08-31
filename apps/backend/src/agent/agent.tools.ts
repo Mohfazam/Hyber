@@ -1,21 +1,19 @@
 import { Type, type FunctionDeclaration } from '@google/genai';
 import * as catalogService from '../catalog/catalog.service.js';
 import { serializeProducts, serializeProduct } from '../catalog/catalog.serializer.js';
+import * as gatingService from '../gating/gating.service.js';
 import type { ProposePurchaseArgs, ProposePurchaseResult } from './agent.types.js';
 
 /**
- * Why this file exists:
- * This is the agent's ENTIRE capability surface. If a tool isn't declared
- * here, the agent cannot do it — full stop. This is the architectural
- * enforcement mechanism for "the agent can never skip the gate": notice
- * there is no `create_payment` or `call_razorpay` tool anywhere in this
- * file. The only path toward spending money is `propose_purchase`, and
- * its handler routes to the Gating Engine, never to Razorpay directly.
+ * UPDATED from the agent-module version — executeProposePurchase now calls
+ * the real Gating Engine instead of returning a stub. Everything else in
+ * this file is unchanged. Replace the full contents of
+ * src/agent/agent.tools.ts with this.
  *
- * Two things live in this file, kept together intentionally:
- * 1. The `FunctionDeclaration` — the JSON schema Gemini needs to know a
- *    tool exists and how to call it.
- * 2. The actual implementation — what happens when Gemini decides to call it.
+ * Note the import of `sessionId` handling below — propose_purchase needs
+ * the session ID to log against, so its signature changes slightly: the
+ * executor now takes sessionId as a second argument, threaded through from
+ * agent.service.ts's tool-calling loop.
  */
 
 // ---------- Tool Declarations (schemas Gemini sees) ----------
@@ -87,13 +85,11 @@ async function executeSearchCatalog(args: {
     category: args.category,
     gender: args.gender,
     size: args.size,
-    maxPrice: args.maxPrice ? Math.round(args.maxPrice * 100) : undefined, // rupees -> paise
+    maxPrice: args.maxPrice ? Math.round(args.maxPrice * 100) : undefined,
     limit: 10,
     offset: 0,
   });
 
-  // Return a lean shape to the model — full schema.org JSON-LD is verbose
-  // and wastes tokens; the model just needs enough to talk about options.
   return serializeProducts(rows).map((p) => ({
     sku: p.sku,
     name: p.name,
@@ -110,43 +106,55 @@ async function executeGetProductDetails(args: { sku: string }) {
 }
 
 /**
- * IMPORTANT — current state (TEMPORARY):
- * The Gating Engine doesn't exist yet (it's the very next module we build).
- * This handler is intentionally a clearly-marked placeholder so the agent
- * module is fully testable right now via search/details, without pretending
- * money-flow is real. Once gating.service.ts exists, this function gets
- * replaced with a real call into it — nothing else in this file changes.
+ * Now calls the real Gating Engine. This function has NO ability to call
+ * a payment API — it can only call gatingService.evaluatePurchase, which
+ * itself has no payment capability yet either (that's the next module).
+ * The agent's response to the user must be truthful about this: "pending"
+ * language, not "done" language, until a real payment result exists.
  */
-async function executeProposePurchase(args: ProposePurchaseArgs): Promise<ProposePurchaseResult> {
-  if (!args.userConfirmed) {
+async function executeProposePurchase(
+  args: ProposePurchaseArgs,
+  sessionId: string,
+): Promise<ProposePurchaseResult> {
+  const decision = await gatingService.evaluatePurchase({
+    sessionId,
+    sku: args.sku,
+    quantity: args.quantity,
+    userConfirmed: args.userConfirmed,
+  });
+
+  if (!decision.passed) {
     return {
       status: 'rejected',
-      message: 'Purchase not proposed: user confirmation flag was not true.',
+      message: `Purchase rejected: ${decision.reason}`,
     };
   }
 
-  // TODO: replace with `gatingService.evaluatePurchase(args)` once built.
   return {
     status: 'pending_gate_check',
-    message: `[STUB] Gating Engine not yet wired. Would propose purchase of ${args.quantity}x ${args.sku}.`,
+    message: `Gate passed for ${args.quantity}x ${args.sku}. Awaiting payment step (not yet implemented) — decision id ${decision.gatingDecisionId}.`,
+    gatingDecisionId: decision.gatingDecisionId,
   };
 }
 
 // ---------- Executor Dispatch ----------
 
 /**
- * The orchestrator (agent.service.ts) calls this with whatever function
- * call Gemini returns. Centralizing dispatch here means the orchestrator
- * loop never needs to know about individual tool implementations.
+ * sessionId is now threaded through so propose_purchase can log against
+ * the correct session — every other tool ignores it.
  */
-export async function executeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+export async function executeTool(
+  name: string,
+  args: Record<string, unknown>,
+  sessionId: string,
+): Promise<unknown> {
   switch (name) {
     case 'search_catalog':
       return executeSearchCatalog(args as Parameters<typeof executeSearchCatalog>[0]);
     case 'get_product_details':
       return executeGetProductDetails(args as { sku: string });
     case 'propose_purchase':
-      return executeProposePurchase(args as unknown as ProposePurchaseArgs);
+      return executeProposePurchase(args as unknown as ProposePurchaseArgs, sessionId);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
