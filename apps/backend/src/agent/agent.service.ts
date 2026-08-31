@@ -8,7 +8,7 @@ import { NotFoundError } from '../common/errors.js';
 
 /**
  * Why this file exists:
- * This is the core reasoning loop — the only place that talks to Gemini.
+ * This is the core reasoning loop ï¿½ the only place that talks to Gemini.
  * Sessions are stateless from HTTP's point of view (each request is a
  * separate call), so we reconstruct conversation history from the DB on
  * every turn, hand it to Gemini, run the tool-calling loop until Gemini
@@ -16,13 +16,13 @@ import { NotFoundError } from '../common/errors.js';
  * persist the updated history back to the DB.
  *
  * MODEL CHOICE: gemini-2.5-flash is used here for low latency, which
- * matters a lot once this sits behind a live voice conversation — swap to
+ * matters a lot once this sits behind a live voice conversation ï¿½ swap to
  * a heavier model only if response quality genuinely requires it.
  */
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const MODEL = 'gemini-2.5-flash';
-const MAX_TOOL_ITERATIONS = 5; // safety cap — never loop forever on tool calls
+const MODEL = 'gemini-3.5-flash-lite';
+const MAX_TOOL_ITERATIONS = 5; // safety cap ï¿½ never loop forever on tool calls
 
 async function loadHistory(sessionId: string): Promise<Content[]> {
   const [row] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
@@ -74,7 +74,7 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
   // Gemini responds with plain text (no more function calls requested).
   while (response.functionCalls && response.functionCalls.length > 0) {
     if (++iterations > MAX_TOOL_ITERATIONS) {
-      throw new Error('Agent exceeded max tool-call iterations — possible loop.');
+      throw new Error('Agent exceeded max tool-call iterations ï¿½ possible loop.');
     }
 
     const responseParts: Part[] = [];
