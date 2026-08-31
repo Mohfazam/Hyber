@@ -27,13 +27,6 @@ async function saveHistory(sessionId: string, history: Content[]): Promise<void>
     .where(eq(sessions.id, sessionId));
 }
 
-
-
-
-
-
-
-
 export async function createSession(userId?: string): Promise<{ sessionId: string }> {
   const [row] = await db
     .insert(sessions)
