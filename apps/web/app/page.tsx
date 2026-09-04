@@ -60,6 +60,7 @@ export default function Home() {
   const [compareOpen, setCompareOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
+  const [suggestedActions, setSuggestedActions] = useState<string[]>(["Find something for me", "Show bestsellers", "Help me compare"]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -67,6 +68,17 @@ export default function Home() {
     script.async = true;
     document.body.appendChild(script);
     return () => script.remove();
+  }, []);
+
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>("[data-chat-input='true']")?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
   useEffect(() => {
@@ -124,6 +136,7 @@ export default function Home() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "The assistant could not answer.");
       setMessages((current) => [...current, { role: "assistant", text: payload.data.reply }]);
+      setSuggestedActions(resultProductsForActions(payload.data.reply));
       if (speakReplies && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(new SpeechSynthesisUtterance(payload.data.reply));
@@ -147,6 +160,11 @@ export default function Home() {
   }
 
   function askAssistant(prompt: string) { setDraft(prompt); }
+
+  function runSuggestedAction(action: string) {
+    setDraft(action);
+    window.setTimeout(() => document.querySelector<HTMLFormElement>("[data-voice-form='true']")?.requestSubmit(), 80);
+  }
 
   function toggleVoice() {
     const voiceWindow = window as VoiceWindow;
@@ -284,17 +302,18 @@ export default function Home() {
         </div>
 
         <div className={`${styles.chatPanel} ${styles.floatingChat}`}>
-          <div className={styles.chatHeader}><div className={styles.agentIdentity}><span className={styles.agentAvatar}>h</span><span><strong>Hyber salesperson</strong><small>Knows the collection</small></span></div><div className={styles.chatHeaderActions}><span className={styles.livePill}>LIVE</span><button onClick={() => setContextOpen((value) => !value)} aria-label="Open conversation context">⌘</button><button onClick={() => void resetConversation()} aria-label="Start a new conversation">↻</button></div></div>
+          <div className={styles.chatHeader}><div className={styles.agentIdentity}><span className={`${styles.agentAvatar} ${voiceListening || sending ? styles.agentActive : ""}`}>h</span><span><strong>Hyber salesperson</strong><small>{voiceListening ? "Listening to you" : sending ? "Finding the right words" : "Knows the collection"}</small></span></div><div className={styles.chatHeaderActions}><span className={styles.livePill}>LIVE</span><button onClick={() => setContextOpen((value) => !value)} aria-label="Open conversation context">⌘</button><button onClick={() => void resetConversation()} aria-label="Start a new conversation">↻</button></div></div>
           <div className={styles.messages} aria-live="polite"><div className={styles.dateLabel}>TODAY</div>
             {messages.map((message, index) => <div className={`${styles.messageRow} ${message.role === "user" ? styles.userRow : ""}`} key={`${message.role}-${index}`}>{message.role === "assistant" && <span className={styles.tinyAvatar}>h</span>}<div className={styles.messageBubble}><p className={message.role === "user" ? styles.userMessage : styles.assistantMessage}>{message.text}</p>{message.role === "assistant" && <div className={styles.messageActions}><button onClick={() => speakMessage(message.text)}>Listen</button><button onClick={() => void copyMessage(message.text, index)}>{copiedMessage === index ? "Copied" : "Copy"}</button></div>}</div></div>)}
             {sending && <div className={styles.typing}><span /><span /><span /> thinking</div>}
           </div>
+          <div className={styles.suggestedActions}>{suggestedActions.map((action) => <button key={action} onClick={() => runSuggestedAction(action)}>{action}<span>↗</span></button>)}</div>
           {contextOpen && <aside className={styles.contextCard}><div><small>CONVERSATION MEMORY</small><button onClick={() => setContextOpen(false)} aria-label="Close context">×</button></div><strong>Hyber is keeping track of</strong><ul><li>{activeProduct ? `Your interest in ${activeProduct.name}` : "Your product preferences as they emerge"}</li><li>{savedProducts.length ? `${savedProducts.length} shortlisted item${savedProducts.length > 1 ? "s" : ""}` : "Nothing shortlisted yet"}</li><li>{voiceLanguage === "en-IN" ? "English conversation" : `${voiceLanguage} voice conversation`}</li></ul><button className={styles.contextAction} onClick={() => void resetConversation()}>Clear and start fresh</button></aside>}
           {activeProduct && <button className={styles.activeProduct} onClick={() => askAssistant(`Tell me more about ${activeProduct.name}`)}><span className={styles.activeProductImage} style={{ backgroundImage: `url(${imageFor(activeProduct)})` }} /><span><small>IN THIS CONVERSATION</small><strong>{activeProduct.name}</strong><em>{activeProduct.offers.priceCurrency} {activeProduct.offers.price}</em></span><span className={styles.activeArrow}>↗</span></button>}
           {error && <p className={styles.error} role="alert">{error}</p>}
           {paymentOrder && <div className={styles.paymentReady}><span className={styles.paymentIcon}>✓</span><span><strong>{paymentStatus === "paid" ? "Payment confirmed" : paymentStatus === "failed" ? "Payment failed" : "Payment ready"}</strong><small>Razorpay order {paymentOrder.id}</small></span><b>{paymentStatus || "created"}</b><button onClick={() => void openCheckout()} disabled={paymentStatus === "paid"}>Pay</button></div>}
           <div className={styles.voiceMode}><span className={voiceListening ? styles.voicePulse : styles.voiceIdle} /><span>{voiceListening ? "Listening..." : handsFree ? "Hands-free mode" : "Voice mode"}</span><span className={styles.waveform} aria-hidden="true">{[1, 2, 3, 4, 5, 6, 7].map((bar) => <i className={voiceListening ? styles.waveActive : ""} key={bar} />)}</span><select value={voiceLanguage} onChange={(event) => setVoiceLanguage(event.target.value)} aria-label="Voice language"><option value="en-IN">English</option><option value="hi-IN">Hindi</option><option value="ta-IN">Tamil</option></select><button type="button" onClick={() => setHandsFree((value) => !value)} className={handsFree ? styles.voiceToggleActive : ""}>{handsFree ? "Hands-free" : "Manual"}</button><button type="button" onClick={() => setSpeakReplies((value) => !value)}>{speakReplies ? "Sound on" : "Sound off"}</button><button type="button" onClick={speakLatest} aria-label="Read latest answer aloud">Listen</button></div>
-          <form className={styles.composer} data-voice-form="true" onSubmit={sendMessage}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={voiceListening ? "Speak now..." : handsFree ? "Hands-free is ready" : "Ask about the collection..."} disabled={!sessionId || sending} aria-label="Message Hyber salesperson" /><button type="button" className={styles.micButton} onClick={toggleVoice} disabled={!voiceSupported || sending} aria-label={voiceListening ? "Stop voice input" : "Start voice input"}>{voiceListening ? "■" : "●"}</button><button type="submit" disabled={!sessionId || !draft.trim() || sending} aria-label="Send message">↑</button></form>
+          <form className={styles.composer} data-voice-form="true" onSubmit={sendMessage}><input data-chat-input="true" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={voiceListening ? "Speak now..." : handsFree ? "Hands-free is ready" : "Ask about the collection..."} disabled={!sessionId || sending} aria-label="Message Hyber salesperson" /><span className={styles.shortcutHint}>⌘ K</span><button type="button" className={styles.micButton} onClick={toggleVoice} disabled={!voiceSupported || sending} aria-label={voiceListening ? "Stop voice input" : "Start voice input"}>{voiceListening ? "■" : "●"}</button><button type="submit" disabled={!sessionId || !draft.trim() || sending} aria-label="Send message">↑</button></form>
           <div className={styles.suggestionRow}><button onClick={() => askAssistant("I need something for everyday use")}>Everyday</button><button onClick={() => askAssistant("What is in stock for men in size UK 9?")}>Men&apos;s UK 9</button><button onClick={() => askAssistant("What is the most interesting thing here?")}>Surprise me</button></div>
         </div>
       </section>
@@ -303,6 +322,13 @@ export default function Home() {
       {compareOpen && <div className={styles.compareOverlay} role="dialog" aria-modal="true" aria-label="Compare products" onClick={() => setCompareOpen(false)}><div className={styles.compareSheet} onClick={(event) => event.stopPropagation()}><div className={styles.compareSheetHead}><div><p className={styles.eyebrow}>Decision view</p><h2>Which one feels right?</h2></div><button onClick={() => setCompareOpen(false)} aria-label="Close comparison">×</button></div><div className={styles.compareColumns}>{compareProducts.map((product) => <article key={product.sku}><span className={styles.compareImage} style={{ backgroundImage: `url(${imageFor(product)})` }} /><small>{product.category}</small><h3>{product.name}</h3><strong>{product.offers.priceCurrency} {product.offers.price}</strong><p>{product.extensions?.voiceDescription ?? "A considered pick from the Hyber collection."}</p><button onClick={() => { setActiveProduct(product); setFocusedProductSku(product.sku); setCompareOpen(false); }}>Ask Hyber about this ↗</button></article>)}</div></div></div>}
     </main>
   );
+}
+
+function resultProductsForActions(reply: string) {
+  const lowerReply = reply.toLowerCase();
+  if (lowerReply.includes("under") || lowerReply.includes("price")) return ["Show cheaper options", "Compare these picks", "What makes this worth it?"];
+  if (lowerReply.includes("stock") || lowerReply.includes("available")) return ["Show only in-stock items", "Find a similar option", "Tell me more about this"];
+  return ["Show me alternatives", "Compare these picks", "Why do you recommend it?"];
 }
 
 function imageFor(product: Product) {
