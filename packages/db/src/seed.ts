@@ -178,6 +178,12 @@ function generateProducts(): NewProduct[] {
 // ---------- Run ----------
 
 async function seed() {
+  const existingProduct = await db.select({ sku: products.sku }).from(products).limit(1);
+  if (existingProduct.length > 0) {
+    console.log('Products already exist. Skipping seed to avoid duplicate SKUs.');
+    process.exit(0);
+  }
+
   const data = generateProducts();
   console.log(`Generated ${data.length} products across ${categories.length} categories.`);
 
