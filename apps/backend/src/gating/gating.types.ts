@@ -10,9 +10,15 @@ export interface GatingDecisionResult {
   reason: string;
   checks: GatingCheck[];
   product?: {
+    id: string;
     sku: string;
     name: string;
     price: number; // paise
+    currency: string;
+  };
+  paymentOrder?: {
+    id: string;
+    amount: number;
     currency: string;
   };
 }

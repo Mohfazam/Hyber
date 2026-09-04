@@ -5,12 +5,12 @@ import * as gatingService from '../gating/gating.service.js';
 import type { ProposePurchaseArgs, ProposePurchaseResult } from './agent.types.js';
 
 /**
- * UPDATED from the agent-module version — executeProposePurchase now calls
+ * UPDATED from the agent-module version ï¿½ executeProposePurchase now calls
  * the real Gating Engine instead of returning a stub. Everything else in
  * this file is unchanged. Replace the full contents of
  * src/agent/agent.tools.ts with this.
  *
- * Note the import of `sessionId` handling below — propose_purchase needs
+ * Note the import of `sessionId` handling below ï¿½ propose_purchase needs
  * the session ID to log against, so its signature changes slightly: the
  * executor now takes sessionId as a second argument, threaded through from
  * agent.service.ts's tool-calling loop.
@@ -50,7 +50,7 @@ export const getProductDetailsDeclaration: FunctionDeclaration = {
 export const proposePurchaseDeclaration: FunctionDeclaration = {
   name: 'propose_purchase',
   description:
-    'Propose completing a purchase for a specific product. ONLY call this after you have stated the exact product, quantity, and price out loud to the user AND the user has given an explicit, unambiguous "yes". Never call this on an implied or soft agreement — if in doubt, ask the user to confirm again first.',
+    'Propose completing a purchase for a specific product. ONLY call this after you have stated the exact product, quantity, and price out loud to the user AND the user has given an explicit, unambiguous "yes". Never call this on an implied or soft agreement ï¿½ if in doubt, ask the user to confirm again first.',
   parameters: {
     type: Type.OBJECT,
     properties: {
@@ -107,7 +107,7 @@ async function executeGetProductDetails(args: { sku: string }) {
 
 /**
  * Now calls the real Gating Engine. This function has NO ability to call
- * a payment API — it can only call gatingService.evaluatePurchase, which
+ * a payment API ï¿½ it can only call gatingService.evaluatePurchase, which
  * itself has no payment capability yet either (that's the next module).
  * The agent's response to the user must be truthful about this: "pending"
  * language, not "done" language, until a real payment result exists.
@@ -131,9 +131,10 @@ async function executeProposePurchase(
   }
 
   return {
-    status: 'pending_gate_check',
-    message: `Gate passed for ${args.quantity}x ${args.sku}. Awaiting payment step (not yet implemented) — decision id ${decision.gatingDecisionId}.`,
+    status: 'payment_ready',
+    message: `Gate passed for ${args.quantity}x ${args.sku}. Razorpay order ${decision.paymentOrder?.id} is ready for payment.`,
     gatingDecisionId: decision.gatingDecisionId,
+    paymentOrder: decision.paymentOrder,
   };
 }
 
@@ -141,7 +142,7 @@ async function executeProposePurchase(
 
 /**
  * sessionId is now threaded through so propose_purchase can log against
- * the correct session — every other tool ignores it.
+ * the correct session ï¿½ every other tool ignores it.
  */
 export async function executeTool(
   name: string,

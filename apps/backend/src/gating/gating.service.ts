@@ -1,6 +1,7 @@
 import { db, gatingDecisions } from '@repo/db';
 import * as catalogService from '../catalog/catalog.service.js';
 import * as auditService from '../audit/audit.service.js';
+import * as paymentService from '../payments/payment.service.js';
 import type { EvaluatePurchaseInput, GatingCheck, GatingDecisionResult } from './gating.types.js';
 
 /**
@@ -8,11 +9,11 @@ import type { EvaluatePurchaseInput, GatingCheck, GatingDecisionResult } from '.
  * This is THE checkpoint. Nothing reaches a payment API without passing
  * through here first. The agent (agent.tools.ts -> propose_purchase) calls
  * this; this module has no idea Gemini exists, and the agent has no way to
- * call Razorpay directly — that capability simply isn't given to it. This
+ * call Razorpay directly ï¿½ that capability simply isn't given to it. This
  * is what makes "bounded and gated" an architectural fact, not a prompt
  * instruction that could theoretically be talked around.
  *
- * Every check run here is recorded — pass AND fail — in gating_decisions,
+ * Every check run here is recorded ï¿½ pass AND fail ï¿½ in gating_decisions,
  * and a summary is written to audit_log. That combination is your
  * explainability evidence for the Bar.
  */
@@ -23,7 +24,7 @@ export async function evaluatePurchase(
   const checks: GatingCheck[] = [];
 
   // ---- Check 1: explicit user confirmation ----
-  // Defense in depth — don't just trust the agent's claim that the user
+  // Defense in depth ï¿½ don't just trust the agent's claim that the user
   // said yes; this is re-verified here as its own logged check.
   checks.push({
     check: 'user_confirmed',
@@ -56,7 +57,7 @@ export async function evaluatePurchase(
   // Once the OTP/payment module exists, exceeding this threshold should
   // route through an additional confirmation step before payment executes.
   // For now, it's recorded as a flag so the audit trail already reflects
-  // this distinction — the enforcement gets wired in when payments land.
+  // this distinction ï¿½ the enforcement gets wired in when payments land.
   const amount = product ? product.price * input.quantity : 0;
   const requiresEscalation = product?.requiresConfirmationAbove
     ? amount > product.requiresConfirmationAbove
@@ -64,7 +65,7 @@ export async function evaluatePurchase(
 
   checks.push({
     check: 'amount_threshold',
-    result: true, // informational only — does not block the gate on its own
+    result: true, // informational only ï¿½ does not block the gate on its own
     detail: requiresEscalation
       ? `Amount ${amount} paise exceeds requiresConfirmationAbove (${product?.requiresConfirmationAbove}). Will require additional confirmation once payment step is wired.`
       : `Amount ${amount} paise is within auto-approvable range.`,
@@ -97,13 +98,14 @@ export async function evaluatePurchase(
     payload: { sku: input.sku, quantity: input.quantity, passed, checks },
   });
 
-  return {
+  const result: GatingDecisionResult = {
     passed,
     gatingDecisionId: decisionRow!.id,
     reason,
     checks,
     product: product
       ? {
+          id: product.id,
           sku: product.sku,
           name: product.name,
           price: product.price,
@@ -111,4 +113,25 @@ export async function evaluatePurchase(
         }
       : undefined,
   };
+
+  if (passed && product) {
+    const paymentOrder = await paymentService.createOrder({
+      sessionId: input.sessionId,
+      productId: product.id,
+      quantity: input.quantity,
+      amount,
+      currency: product.currency,
+    });
+
+    await auditService.logAction({
+      sessionId: input.sessionId,
+      actionType: 'payment_result',
+      reason: 'Razorpay order created after gating passed.',
+      payload: { orderId: paymentOrder.id, amount, currency: product.currency },
+    });
+
+    return { ...result, paymentOrder };
+  }
+
+  return result;
 }

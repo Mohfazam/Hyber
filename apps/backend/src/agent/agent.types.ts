@@ -6,14 +6,14 @@ import type { Content } from '@google/genai';
  * own SDK types where we need something more specific to our domain.
  */
 
-/** What we persist per conversation — matches the `sessions` table's jsonb column. */
+/** What we persist per conversation ï¿½ matches the `sessions` table's jsonb column. */
 export interface AgentSessionState {
   sessionId: string;
-  history: Content[]; // Gemini's own Content[] format — role + parts, reused directly
+  history: Content[]; // Gemini's own Content[] format ï¿½ role + parts, reused directly
 }
 
 /** The payload shape when the agent proposes a purchase. This is what gets
- * handed to the Gating Engine — the agent NEVER calls payments directly. */
+ * handed to the Gating Engine ï¿½ the agent NEVER calls payments directly. */
 export interface ProposePurchaseArgs {
   sku: string;
   quantity: number;
@@ -21,7 +21,12 @@ export interface ProposePurchaseArgs {
 }
 
 export interface ProposePurchaseResult {
-  status: 'pending_gate_check' | 'rejected';
+  status: 'payment_ready' | 'rejected';
   message: string;
   gatingDecisionId?: string;
+  paymentOrder?: {
+    id: string;
+    amount: number;
+    currency: string;
+  };
 }
