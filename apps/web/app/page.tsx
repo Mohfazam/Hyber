@@ -51,6 +51,8 @@ export default function Home() {
   const [sortHint, setSortHint] = useState("");
   const [catalogQuery, setCatalogQuery] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("All");
+  const [focusedProductSku, setFocusedProductSku] = useState("");
+  const [savedSkus, setSavedSkus] = useState<string[]>([]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -119,6 +121,11 @@ export default function Home() {
       if (resultProducts.length > 0) {
         setActiveProduct(resultProducts[0]);
         setSortHint(resultProducts[0].category);
+        setFocusedProductSku(resultProducts[0].sku);
+        setProducts((current) => {
+          const merged = [...resultProducts, ...current];
+          return merged.filter((product, index, all) => all.findIndex((candidate) => candidate.sku === product.sku) === index);
+        });
       }
       if (payload.data.paymentOrder) setPaymentOrder(payload.data.paymentOrder);
     } catch (sendError) {
@@ -172,10 +179,12 @@ export default function Home() {
 
   const categories = ["All", ...Array.from(new Set(products.map((product) => product.category)))];
   const visibleProducts = sortProducts(products, sortHint, activeProduct).filter((product) => {
+    if (focusedProductSku && product.sku !== focusedProductSku) return false;
     const matchesCategory = catalogCategory === "All" || product.category === catalogCategory;
     const query = catalogQuery.toLowerCase();
     return matchesCategory && (!query || `${product.name} ${product.category} ${product.sku}`.toLowerCase().includes(query));
   });
+  const savedProducts = products.filter((product) => savedSkus.includes(product.sku));
 
   async function openCheckout() {
     if (!paymentOrder) return;
@@ -203,7 +212,7 @@ export default function Home() {
 
       <section className={styles.workspace}>
         <div className={styles.catalogPanel}>
-          <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Curated today</p><h2>From the catalog</h2></div><span className={styles.count}>{visibleProducts.length || "--"} of {products.length || "--"}</span></div>
+          <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>{focusedProductSku ? "Selected by Hyber" : "Curated today"}</p><h2>{focusedProductSku ? "Your match" : "From the catalog"}</h2></div><span className={styles.headingActions}>{focusedProductSku && <button className={styles.clearFocus} onClick={() => { setFocusedProductSku(""); setActiveProduct(undefined); setSortHint(""); }}>View all</button>}<span className={styles.count}>{visibleProducts.length || "--"} of {products.length || "--"}</span></span></div>
           <div className={styles.catalogTools}>
             <label className={styles.catalogSearch}><span>⌕</span><input value={catalogQuery} onChange={(event) => setCatalogQuery(event.target.value)} placeholder="Search this collection" aria-label="Search this collection" /></label>
             <div className={styles.categoryRail} role="tablist" aria-label="Product categories">
@@ -212,14 +221,18 @@ export default function Home() {
           </div>
           <div className={styles.productGrid}>
             {visibleProducts.map((product, index) => (
-              <button className={`${styles.productCard} ${activeProduct?.sku === product.sku ? styles.activeCard : ""}`} key={product.sku} onClick={() => { setActiveProduct(product); askAssistant(`Tell me about ${product.name}, SKU ${product.sku}`); }}>
-                <span className={styles.productImage} style={{ backgroundImage: `url(${imageFor(product)})` }} aria-label={`${product.name} product image`} />
-                <span className={styles.productInfo}><span className={styles.productMeta}><span className={styles.productCategory}>{product.category}</span><span className={styles.productIndex}>0{index + 1}</span></span><strong>{product.name}</strong><span className={styles.productBottom}><span>{product.offers.priceCurrency} {product.offers.price}</span><span className={styles.inStock}>In stock</span></span></span>
-              </button>
+              <article className={`${styles.productCard} ${activeProduct?.sku === product.sku ? styles.activeCard : ""}`} key={product.sku}>
+                <button className={styles.productOpen} onClick={() => { setActiveProduct(product); askAssistant(`Tell me about ${product.name}, SKU ${product.sku}`); }}>
+                  <span className={styles.productImage} style={{ backgroundImage: `url(${imageFor(product)})` }} aria-label={`${product.name} product image`} />
+                  <span className={styles.productInfo}><span className={styles.productMeta}><span className={styles.productCategory}>{product.category}</span><span className={styles.productIndex}>0{index + 1}</span></span><strong>{product.name}</strong><span className={styles.productBottom}><span>{product.offers.priceCurrency} {product.offers.price}</span><span className={styles.inStock}>In stock</span></span></span>
+                </button>
+                <button className={`${styles.saveButton} ${savedSkus.includes(product.sku) ? styles.saved : ""}`} onClick={() => setSavedSkus((current) => current.includes(product.sku) ? current.filter((sku) => sku !== product.sku) : [...current, product.sku])} aria-label={savedSkus.includes(product.sku) ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}>{savedSkus.includes(product.sku) ? "♥" : "♡"}</button>
+              </article>
             ))}
           </div>
           {!loading && products.length === 0 && !error && <p className={styles.emptyState}>No products found in the catalog.</p>}
           <button className={styles.catalogPrompt} onClick={() => askAssistant("Show me your best options under INR 3000")}>Ask for a better match <span>↗</span></button>
+          {savedProducts.length > 0 && <div className={styles.shortlist}><div><p className={styles.eyebrow}>Your shortlist</p><span>{savedProducts.length} saved for later</span></div><div className={styles.shortlistItems}>{savedProducts.map((product) => <button key={product.sku} onClick={() => { setActiveProduct(product); setFocusedProductSku(product.sku); }}><span style={{ backgroundImage: `url(${imageFor(product)})` }} /><strong>{product.name}</strong></button>)}</div></div>}
         </div>
 
         <div className={`${styles.chatPanel} ${styles.floatingChat}`}>

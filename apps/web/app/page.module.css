@@ -19,6 +19,9 @@
 .sectionHeading { justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 17px; }
 .sectionHeading h2 { margin-top: 7px; font-size: 25px; letter-spacing: -.04em; }
 .count { color: var(--muted); font: 11px var(--font-geist-mono), monospace; }
+.headingActions { display: flex; align-items: center; gap: 12px; }
+.clearFocus { padding: 7px 9px; border: 1px solid var(--coral); color: var(--coral); background: transparent; font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
+.clearFocus:hover { color: var(--cream); background: var(--coral); }
 .catalogTools { display: flex; align-items: center; gap: 14px; padding: 16px 0 2px; }
 .catalogSearch { display: flex; align-items: center; gap: 8px; min-width: 170px; padding: 9px 10px; border: 1px solid var(--line); background: #fbfaf6; }
 .catalogSearch span { color: var(--coral); font-size: 19px; line-height: 1; }
@@ -28,10 +31,13 @@
 .categoryRail button { flex: 0 0 auto; padding: 8px 9px; border: 1px solid transparent; color: var(--muted); background: transparent; font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
 .categoryRail button:hover, .categoryRail .categoryActive { border-color: var(--ink); color: var(--ink); background: #ebe5d9; }
 .productGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding-top: 20px; }
-.productCard { min-width: 0; padding: 0; border: 0; text-align: left; color: inherit; background: transparent; cursor: pointer; }
+.productCard { position: relative; min-width: 0; }
+.productOpen { display: block; width: 100%; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
 .productImage { display: block; aspect-ratio: 1.15; background-position: center; background-size: cover; filter: saturate(.78); transition: transform .35s, filter .35s; }
 .productCard:hover .productImage, .activeCard .productImage { transform: translateY(-4px); filter: saturate(1); }
 .activeCard .productInfo { border-bottom: 2px solid var(--coral); padding-bottom: 9px; }
+.saveButton { position: absolute; top: 9px; right: 9px; z-index: 1; display: grid; place-items: center; width: 29px; height: 29px; border: 0; color: var(--ink); background: #fbfaf6dc; font-size: 18px; cursor: pointer; }
+.saveButton:hover, .saveButton.saved { color: var(--coral); background: #fffdf9; }
 .productInfo { display: flex; flex-direction: column; gap: 7px; padding: 13px 3px 0; }
 .productMeta { display: flex; align-items: center; justify-content: space-between; }
 .productCategory { color: var(--muted); font-size: 9px; }
@@ -42,6 +48,15 @@
 .catalogPrompt { display: flex; justify-content: space-between; width: 100%; margin-top: 34px; padding: 16px 2px; border: 0; border-top: 1px solid var(--line); color: var(--ink); background: transparent; text-align: left; font: 12px var(--font-geist-mono), monospace; cursor: pointer; }
 .catalogPrompt span { color: var(--coral); font-size: 18px; }
 .emptyState { padding: 30px 0; color: var(--muted); }
+.shortlist { margin-top: 34px; padding: 17px 0 0; border-top: 1px solid var(--line); }
+.shortlist > div:first-child { display: flex; align-items: baseline; justify-content: space-between; }
+.shortlist > div:first-child span { color: var(--muted); font: 10px var(--font-geist-mono), monospace; }
+.shortlistItems { display: flex; gap: 9px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.shortlistItems::-webkit-scrollbar { display: none; }
+.shortlistItems button { display: flex; align-items: center; flex: 0 0 170px; gap: 8px; padding: 6px; border: 1px solid var(--line); color: var(--ink); background: #fbfaf6; text-align: left; cursor: pointer; }
+.shortlistItems button:hover { border-color: var(--coral); }
+.shortlistItems button span { width: 34px; height: 34px; flex: 0 0 auto; background-position: center; background-size: cover; }
+.shortlistItems strong { overflow: hidden; font-size: 10px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .chatHeader { justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .agentIdentity { gap: 10px; }
 .agentIdentity strong, .agentIdentity small { display: block; }
