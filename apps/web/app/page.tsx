@@ -683,9 +683,21 @@ export default function Home() {
       } else if (speakReplies && "speechSynthesis" in window) {
         // Fallback
         window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(
-          new SpeechSynthesisUtterance(payload.data.reply),
+        const utterance = new SpeechSynthesisUtterance(payload.data.reply);
+        
+        // Find a better sounding voice
+        const voices = window.speechSynthesis.getVoices();
+        const premiumVoice = voices.find(v => 
+          v.name.includes('Natural') || 
+          v.name.includes('Neural') || 
+          v.name.includes('Google') || 
+          v.name.includes('Premium')
         );
+        if (premiumVoice) {
+          utterance.voice = premiumVoice;
+        }
+        
+        window.speechSynthesis.speak(utterance);
       }
 
       if (resultProducts.length > 0) {
@@ -799,8 +811,23 @@ export default function Home() {
       return;
     }
     if (!("speechSynthesis" in window)) return;
+    
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Find a better sounding voice
+    const voices = window.speechSynthesis.getVoices();
+    const premiumVoice = voices.find(v => 
+      v.name.includes('Natural') || 
+      v.name.includes('Neural') || 
+      v.name.includes('Google') || 
+      v.name.includes('Premium')
+    );
+    if (premiumVoice) {
+      utterance.voice = premiumVoice;
+    }
+    
+    window.speechSynthesis.speak(utterance);
   }
 
   function speakLatest() {
