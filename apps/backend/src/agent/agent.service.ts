@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { env } from '../config/env.js';
 import { SYSTEM_PROMPT } from './agent.prompts.js';
 import { agentToolDeclarations, executeTool } from './agent.tools.js';
+import { generateTTS } from './agent.tts.js';
 import { NotFoundError } from '../common/errors.js';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
@@ -40,6 +41,7 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
   reply: string;
   paymentOrder?: { id: string; amount: number; currency: string };
   selectedProducts?: unknown[];
+  audio?: string | null;
 }> {
   const history = await loadHistory(sessionId);
 
@@ -97,5 +99,10 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
   const updatedHistory = chat.getHistory();
   await saveHistory(sessionId, updatedHistory);
 
-  return { reply: finalText, paymentOrder, selectedProducts };
+  let audio: string | null = null;
+  if (finalText) {
+    audio = await generateTTS(finalText);
+  }
+
+  return { reply: finalText, paymentOrder, selectedProducts, audio };
 }

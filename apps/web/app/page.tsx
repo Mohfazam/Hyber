@@ -28,6 +28,7 @@ type Message = {
   text: string;
   products?: Product[];
   isStreaming?: boolean;
+  audio?: string | null;
 };
 
 type PaymentOrder = { id: string; amount: number; currency: string };
@@ -476,7 +477,6 @@ export default function Home() {
   const [activeProduct, setActiveProduct] = useState<Product>();
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const [handsFree, setHandsFree] = useState(false);
   const [speakReplies, setSpeakReplies] = useState(true);
   const [voiceLanguage, setVoiceLanguage] = useState("en-IN");
   const [sortHint, setSortHint] = useState("");
@@ -650,13 +650,14 @@ export default function Home() {
         normalizeProduct,
       );
 
-      // Add message with streaming flag and embedded products
+      // Add message with streaming flag, embedded products, and audio
       setMessages((current) => {
         const newMsg: Message = {
           role: "assistant",
           text: payload.data.reply,
           products: resultProducts.length > 0 ? resultProducts : undefined,
           isStreaming: true,
+          audio: payload.data.audio,
         };
         setStreamingIndex(current.length);
         return [...current, newMsg];
@@ -667,7 +668,20 @@ export default function Home() {
 
       setSuggestedActions(resultProductsForActions(payload.data.reply));
 
-      if (speakReplies && "speechSynthesis" in window) {
+      if (speakReplies && payload.data.audio) {
+        const audioEl = new Audio(`data:audio/mpeg;base64,${payload.data.audio}`);
+        audioEl.play().catch(console.error);
+        
+        // Sync voice orb processing state with audio playback
+        if (showVoiceOrb) {
+           setVoiceProcessing(true);
+           audioEl.onended = () => {
+             setVoiceProcessing(false);
+             setShowVoiceOrb(false);
+           };
+        }
+      } else if (speakReplies && "speechSynthesis" in window) {
+        // Fallback
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(
           new SpeechSynthesisUtterance(payload.data.reply),
@@ -756,17 +770,16 @@ export default function Home() {
       setVoiceListening(false);
       setVoiceProcessing(true);
       window.setTimeout(() => {
-        setShowVoiceOrb(false);
-        setVoiceProcessing(false);
-        if (handsFree && transcript) {
-          window.setTimeout(() => {
-            const form = document.querySelector(
-              "[data-voice-form='true']",
-            ) as HTMLFormElement | null;
-            form?.requestSubmit();
-          }, 120);
+        if (transcript) {
+          const form = document.querySelector(
+            "[data-voice-form='true']",
+          ) as HTMLFormElement | null;
+          form?.requestSubmit();
+        } else {
+          setVoiceProcessing(false);
+          setShowVoiceOrb(false);
         }
-      }, 600);
+      }, 500);
     };
     recognition.onend = () => setVoiceListening(false);
     recognition.onerror = () => {
@@ -779,7 +792,12 @@ export default function Home() {
     recognition.start();
   }
 
-  function speakMessage(text: string) {
+  function speakMessage(text: string, audioBase64?: string | null) {
+    if (audioBase64) {
+      const audioEl = new Audio(`data:audio/mpeg;base64,${audioBase64}`);
+      audioEl.play().catch(console.error);
+      return;
+    }
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
@@ -789,7 +807,7 @@ export default function Home() {
     const latest = [...messages]
       .reverse()
       .find((message) => message.role === "assistant");
-    if (latest) speakMessage(latest.text);
+    if (latest) speakMessage(latest.text, latest.audio);
   }
 
   async function copyMessage(text: string, index: number) {
@@ -1239,7 +1257,7 @@ export default function Home() {
                       {message.role === "assistant" && (
                         <div className={styles.messageActions}>
                           <button
-                            onClick={() => speakMessage(message.text)}
+                            onClick={() => speakMessage(message.text, message.audio)}
                           >
                             Listen
                           </button>
@@ -1398,9 +1416,7 @@ export default function Home() {
               <span>
                 {voiceListening
                   ? "Listening..."
-                  : handsFree
-                    ? "Hands-free mode"
-                    : "Voice mode"}
+                  : "Voice mode"}
               </span>
               <span className={styles.waveform} aria-hidden="true">
                 {[1, 2, 3, 4, 5, 6, 7].map((bar) => (
@@ -1419,13 +1435,6 @@ export default function Home() {
                 <option value="hi-IN">Hindi</option>
                 <option value="ta-IN">Tamil</option>
               </select>
-              <button
-                type="button"
-                onClick={() => setHandsFree((value) => !value)}
-                className={handsFree ? styles.voiceToggleActive : ""}
-              >
-                {handsFree ? "Hands-free" : "Manual"}
-              </button>
               <button
                 type="button"
                 onClick={() => setSpeakReplies((value) => !value)}
@@ -1454,9 +1463,7 @@ export default function Home() {
                 placeholder={
                   voiceListening
                     ? "Speak now..."
-                    : handsFree
-                      ? "Hands-free is ready"
-                      : "Ask about the collection..."
+                    : "Ask about the collection..."
                 }
                 disabled={!sessionId || sending}
                 aria-label="Message Hyber salesperson"
