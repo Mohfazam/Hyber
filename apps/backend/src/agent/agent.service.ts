@@ -63,8 +63,9 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
 
       responseParts.push({
         functionResponse: {
+          id: call.id,
           name: call.name!,
-          response: { result },
+          response: { output: result },
         },
       });
     }
