@@ -61,6 +61,9 @@
 .shortlistItems button span { width: 34px; height: 34px; flex: 0 0 auto; background-position: center; background-size: cover; }
 .shortlistItems strong { overflow: hidden; font-size: 10px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .chatHeader { justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.chatHeaderActions { display: flex; align-items: center; gap: 6px; }
+.chatHeaderActions > button { display: grid; place-items: center; width: 27px; height: 27px; border: 1px solid var(--line); color: var(--muted); background: transparent; cursor: pointer; }
+.chatHeaderActions > button:hover { border-color: var(--coral); color: var(--coral); }
 .agentIdentity { gap: 10px; }
 .agentIdentity strong, .agentIdentity small { display: block; }
 .agentIdentity strong { font-size: 13px; }
@@ -70,14 +73,26 @@
 .messages { flex: 1; min-height: 280px; padding: 20px; overflow-y: auto; }
 .dateLabel { margin-bottom: 24px; color: var(--muted); font-size: 9px; }
 .messageRow { display: flex; align-items: flex-start; gap: 8px; margin: 17px 0; }
+.messageBubble { max-width: 88%; }
 .tinyAvatar { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--coral); font: 14px Georgia, serif; }
-.assistantMessage, .userMessage { max-width: 88%; padding: 12px 14px; font-size: 13px; line-height: 1.55; }
+.assistantMessage, .userMessage { padding: 12px 14px; font-size: 13px; line-height: 1.55; }
 .assistantMessage { background: #eee9de; }
 .userRow { justify-content: flex-end; }
 .userMessage { color: var(--cream); background: var(--ink); }
+.messageActions { display: flex; gap: 8px; padding: 5px 2px 0; }
+.messageActions button { padding: 0; border: 0; color: var(--muted); background: transparent; font: 9px var(--font-geist-mono), monospace; cursor: pointer; }
+.messageActions button:hover { color: var(--coral); }
 .typing { color: var(--muted); font: 11px var(--font-geist-mono), monospace; }
 .typing span { display: inline-block; width: 4px; height: 4px; margin-right: 3px; border-radius: 50%; background: var(--coral); }
 .error { margin: 0 20px 10px; color: #ad4937; font-size: 12px; line-height: 1.4; }
+.contextCard { position: absolute; z-index: 3; top: 70px; right: 14px; left: 14px; padding: 16px; border: 1px solid var(--line); color: var(--ink); background: var(--cream); box-shadow: 0 14px 30px #24231f24; animation: rise .2s ease-out; }
+.contextCard > div { display: flex; justify-content: space-between; align-items: center; }
+.contextCard small { color: var(--coral); font: 9px var(--font-geist-mono), monospace; letter-spacing: .1em; }
+.contextCard > div button { border: 0; color: var(--muted); background: transparent; font-size: 20px; cursor: pointer; }
+.contextCard > strong { display: block; margin-top: 13px; font-size: 12px; }
+.contextCard ul { display: grid; gap: 8px; margin: 12px 0 15px; padding-left: 16px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.contextAction { padding: 8px 10px; border: 1px solid var(--line); color: var(--ink); background: transparent; font: 9px var(--font-geist-mono), monospace; cursor: pointer; }
+.contextAction:hover { color: var(--cream); background: var(--ink); }
 .activeProduct { display: flex; align-items: center; gap: 10px; margin: 0 20px 12px; padding: 8px; border: 1px solid var(--line); color: var(--ink); background: #f4f0e7; text-align: left; cursor: pointer; }
 .activeProductImage { width: 45px; height: 45px; flex: 0 0 auto; background-position: center; background-size: cover; }
 .activeProduct span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
