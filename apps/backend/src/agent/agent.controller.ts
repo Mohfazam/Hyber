@@ -13,7 +13,7 @@ export async function createSession(req: Request, res: Response): Promise<void> 
 export async function sendMessage(req: Request, res: Response): Promise<void> {
   const { sessionId, message } = sendMessageBodySchema.parse(req.body);
 
-  const reply = await agentService.sendMessage(sessionId, message);
+  const result = await agentService.sendMessage(sessionId, message);
 
-  res.status(200).json({ data: { reply } });
+  res.status(200).json({ data: result });
 }

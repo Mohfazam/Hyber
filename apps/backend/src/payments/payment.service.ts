@@ -6,6 +6,23 @@ import { env } from '../config/env.js';
 import * as auditService from '../audit/audit.service.js';
 import type { CreateOrderInput, PaymentWebhookEvent } from './payment.types.js';
 
+export async function getOrderStatus(orderId: string) {
+  const [order] = await db
+    .select({
+      orderId: orders.razorpayOrderId,
+      paymentId: orders.razorpayPaymentId,
+      status: orders.status,
+      amount: orders.amount,
+      currency: orders.currency,
+    })
+    .from(orders)
+    .where(eq(orders.razorpayOrderId, orderId))
+    .limit(1);
+
+  if (!order) throw new Error(`No local order found for Razorpay order "${orderId}".`);
+  return order;
+}
+
 function getClient() {
   if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
     throw new Error('Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');

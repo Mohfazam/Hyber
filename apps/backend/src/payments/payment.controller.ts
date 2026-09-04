@@ -2,6 +2,15 @@ import type { Request, Response } from 'express';
 import { parseWebhookEvent } from './payment.validators.js';
 import * as paymentService from './payment.service.js';
 
+export function getPaymentConfig(_req: Request, res: Response) {
+  res.status(200).json({ data: { keyId: process.env.RAZORPAY_KEY_ID ?? null } });
+}
+
+export async function getOrderStatus(req: Request, res: Response) {
+  const result = await paymentService.getOrderStatus(req.params.orderId!);
+  res.status(200).json({ data: result });
+}
+
 export async function handleWebhook(req: Request, res: Response) {
   const signature = req.header('x-razorpay-signature');
   if (!signature || !Buffer.isBuffer(req.body) || !paymentService.verifyWebhookSignature(req.body, signature)) {
