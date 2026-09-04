@@ -1,84 +1,6 @@
-/* ──────────────────────────────────────────────────────────
-   Hyber — Global Design Tokens & Base Reset (Dark Theme)
-   ────────────────────────────────────────────────────────── */
-
-@property --gradient-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 :root {
-  /* ── Surfaces ── */
-  --bg-deep: #07070b;
-  --bg-base: #0c0c14;
-  --bg-raised: #111119;
-  --bg-glass: rgba(255, 255, 255, 0.035);
-  --bg-glass-hover: rgba(255, 255, 255, 0.06);
-  --bg-glass-strong: rgba(255, 255, 255, 0.08);
-
-  /* ── Borders ── */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-mid: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(232, 104, 74, 0.35);
-  --border-glow: rgba(232, 104, 74, 0.15);
-
-  /* ── Text ── */
-  --text-primary: #eceae6;
-  --text-secondary: #8a877f;
-  --text-muted: #5a5750;
-  --text-inverse: #07070b;
-
-  /* ── Accents ── */
-  --accent: #e8684a;
-  --accent-glow: rgba(232, 104, 74, 0.2);
-  --accent-soft: rgba(232, 104, 74, 0.08);
-  --accent-gradient: linear-gradient(135deg, #e8684a, #d94680, #a855f7);
-  --accent-gradient-subtle: linear-gradient(
-    135deg,
-    rgba(232, 104, 74, 0.15),
-    rgba(217, 70, 128, 0.1),
-    rgba(168, 85, 247, 0.08)
-  );
-
-  /* ── Status ── */
-  --success: #34d399;
-  --success-soft: rgba(52, 211, 153, 0.1);
-  --warning: #fbbf24;
-  --error: #f87171;
-  --error-soft: rgba(248, 113, 113, 0.1);
-
-  /* ── Effects ── */
-  --glass-blur: blur(20px);
-  --glass-blur-strong: blur(40px);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 40px rgba(232, 104, 74, 0.1);
-  --shadow-glow-strong: 0 0 80px rgba(232, 104, 74, 0.15);
-
-  /* ── Radii ── */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-full: 9999px;
-
-  /* ── Durations ── */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-slow: 500ms;
-}
-
-/* ── Reset ── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  --background: #f4f0e7;
+  --foreground: #24231f;
 }
 
 html,
@@ -88,46 +10,18 @@ body {
 }
 
 body {
-  color: var(--text-primary);
-  background: var(--bg-deep);
-  font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-inter), var(--font-geist-sans), "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 a {
   color: inherit;
   text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar {
-  width: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-mid);
-  border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
-/* ── Animated background mesh ── */
-@keyframes rotateMesh {
-  to {
-    --gradient-angle: 360deg;
-  }
 }
