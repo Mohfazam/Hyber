@@ -10,6 +10,7 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().min(1).optional(),
   RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
+  ELEVENLABS_API_KEY: z.string().min(1, 'ELEVENLABS_API_KEY is required for TTS'),
 });
 
 const parsed = envSchema.safeParse(process.env);
