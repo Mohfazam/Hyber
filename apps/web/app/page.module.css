@@ -92,10 +92,18 @@
 .paymentReady b { margin-left: auto; font: 10px var(--font-geist-mono), monospace; text-transform: uppercase; }
 .paymentReady button { padding: 7px 10px; border: 0; color: var(--cream); background: var(--coral); font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
 .paymentReady button:disabled { opacity: .45; cursor: not-allowed; }
-.voiceMode { display: flex; align-items: center; gap: 7px; margin: 0 20px 8px; color: var(--muted); font: 9px var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: .08em; }
-.voiceMode button { margin-left: auto; padding: 4px 7px; border: 1px solid var(--line); color: var(--muted); background: transparent; font: inherit; cursor: pointer; }
+.voiceMode { display: flex; align-items: center; gap: 7px; margin: 0 20px 8px; color: var(--muted); font: 9px var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: .06em; }
+.voiceMode button, .voiceMode select { padding: 4px 6px; border: 1px solid var(--line); color: var(--muted); background: transparent; font: inherit; cursor: pointer; }
+.voiceMode button:first-of-type { margin-left: auto; }
+.voiceMode button:hover, .voiceMode .voiceToggleActive { border-color: var(--coral); color: var(--coral); }
+.voiceMode select { max-width: 75px; outline: none; }
 .voiceIdle, .voicePulse { width: 7px; height: 7px; border-radius: 50%; background: #9d978b; }
 .voicePulse { background: var(--coral); box-shadow: 0 0 0 5px #e8684a26; animation: pulse 1.2s infinite; }
+.waveform { display: flex; align-items: center; gap: 2px; height: 14px; margin-right: 2px; }
+.waveform i { width: 2px; height: 4px; background: #c4bdb1; }
+.waveform .waveActive { background: var(--coral); animation: wave .7s ease-in-out infinite alternate; }
+.waveform .waveActive:nth-child(2n) { animation-delay: .15s; }
+.waveform .waveActive:nth-child(3n) { animation-delay: .3s; }
 .micButton { width: 28px !important; color: var(--coral) !important; background: transparent !important; font-size: 12px !important; }
 .composer { display: flex; gap: 8px; margin: 0 20px; padding: 8px 8px 8px 14px; border: 1px solid var(--line); background: #fffdf9; }
 .composer input { flex: 1; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font: 13px var(--font-geist-sans), sans-serif; }
@@ -131,5 +139,6 @@
 @media (max-width: 900px) { .workspace { flex-direction: column; } .chatPanel { min-width: 0; } .intro { margin-top: 80px; } }
 @media (max-width: 620px) { .page { padding: 20px 17px 105px; } .headerMeta { font-size: 9px; } .headerMeta .headerDivider, .headerMeta span:last-child { display: none; } .intro { margin: 70px 0 45px; } .intro h1 { font-size: 54px; } .catalogTools { display: block; } .catalogSearch { margin-bottom: 10px; } .productGrid { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; } .footer { align-items: flex-start; flex-direction: column; gap: 8px; margin-top: 50px; } .compareTray { right: 12px; left: 12px; bottom: 12px; justify-content: space-between; } .compareTray > div:first-child { min-width: 0; } .compareSheet { padding: 20px; } .compareColumns { gap: 10px; } .compareColumns p { display: none; } }
 @keyframes pulse { 50% { transform: scale(1.35); opacity: .55; } }
+@keyframes wave { to { height: 13px; } }
 @keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
