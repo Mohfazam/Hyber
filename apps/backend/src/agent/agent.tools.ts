@@ -93,6 +93,7 @@ async function executeSearchCatalog(args: {
   return serializeProducts(rows).map((p) => ({
     sku: p.sku,
     name: p.name,
+    category: p.category,
     price: p.offers.price,
     currency: p.offers.priceCurrency,
     availability: p.offers.availability,

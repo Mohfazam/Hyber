@@ -39,6 +39,7 @@ export async function createSession(userId?: string): Promise<{ sessionId: strin
 export async function sendMessage(sessionId: string, userMessage: string): Promise<{
   reply: string;
   paymentOrder?: { id: string; amount: number; currency: string };
+  selectedProducts?: unknown[];
 }> {
   const history = await loadHistory(sessionId);
 
@@ -54,6 +55,7 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
   let response = await chat.sendMessage({ message: userMessage });
   let iterations = 0;
   let paymentOrder: { id: string; amount: number; currency: string } | undefined;
+  const selectedProducts: unknown[] = [];
 
   while (response.functionCalls && response.functionCalls.length > 0) {
     if (++iterations > MAX_TOOL_ITERATIONS) {
@@ -64,6 +66,12 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
 
     for (const call of response.functionCalls) {
       const result = await executeTool(call.name!, call.args ?? {}, sessionId);
+
+      if (call.name === 'search_catalog' && Array.isArray(result)) {
+        selectedProducts.push(...result);
+      } else if (call.name === 'get_product_details' && result && typeof result === 'object') {
+        selectedProducts.push(result);
+      }
 
       if (typeof result === 'object' && result !== null && 'paymentOrder' in result) {
         const candidate = (result as { paymentOrder?: unknown }).paymentOrder;
@@ -89,5 +97,5 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
   const updatedHistory = chat.getHistory();
   await saveHistory(sessionId, updatedHistory);
 
-  return { reply: finalText, paymentOrder };
+  return { reply: finalText, paymentOrder, selectedProducts };
 }
