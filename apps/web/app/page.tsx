@@ -203,7 +203,7 @@ export default function Home() {
   const compareProducts = products.filter((product) => compareSkus.includes(product.sku));
 
   function toggleCompare(sku: string) {
-    setCompareSkus((current) => current.includes(sku) ? current.filter((item) => item !== sku) : current.length < 2 ? [...current, sku] : [current[1], sku]);
+    setCompareSkus((current) => current.includes(sku) ? current.filter((item) => item !== sku) : current.length < 2 ? [...current, sku] : [current[1]!, sku]);
   }
 
   async function openCheckout() {
