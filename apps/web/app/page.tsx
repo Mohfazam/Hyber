@@ -58,6 +58,8 @@ export default function Home() {
   const [savedSkus, setSavedSkus] = useState<string[]>([]);
   const [compareSkus, setCompareSkus] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -192,6 +194,31 @@ export default function Home() {
     }
   }
 
+  function speakMessage(text: string) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  }
+
+  async function copyMessage(text: string, index: number) {
+    await navigator.clipboard?.writeText(text);
+    setCopiedMessage(index);
+    window.setTimeout(() => setCopiedMessage(null), 1400);
+  }
+
+  async function resetConversation() {
+    const response = await fetch(`${API_URL}/agent/session`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    if (!response.ok) return setError("Could not start a fresh conversation.");
+    const session = await response.json();
+    setSessionId(session.data.sessionId);
+    setMessages([{ role: "assistant", text: "Fresh page, fresh possibilities. What are we looking for today?" }]);
+    setActiveProduct(undefined);
+    setFocusedProductSku("");
+    setPaymentOrder(undefined);
+    setPaymentStatus("");
+    setContextOpen(false);
+  }
+
   const categories = ["All", ...Array.from(new Set(products.map((product) => product.category)))];
   const visibleProducts = sortProducts(products, sortHint, activeProduct).filter((product) => {
     if (focusedProductSku && product.sku !== focusedProductSku) return false;
@@ -257,11 +284,12 @@ export default function Home() {
         </div>
 
         <div className={`${styles.chatPanel} ${styles.floatingChat}`}>
-          <div className={styles.chatHeader}><div className={styles.agentIdentity}><span className={styles.agentAvatar}>h</span><span><strong>Hyber salesperson</strong><small>Knows the collection</small></span></div><span className={styles.livePill}>LIVE</span></div>
+          <div className={styles.chatHeader}><div className={styles.agentIdentity}><span className={styles.agentAvatar}>h</span><span><strong>Hyber salesperson</strong><small>Knows the collection</small></span></div><div className={styles.chatHeaderActions}><span className={styles.livePill}>LIVE</span><button onClick={() => setContextOpen((value) => !value)} aria-label="Open conversation context">⌘</button><button onClick={() => void resetConversation()} aria-label="Start a new conversation">↻</button></div></div>
           <div className={styles.messages} aria-live="polite"><div className={styles.dateLabel}>TODAY</div>
-            {messages.map((message, index) => <div className={`${styles.messageRow} ${message.role === "user" ? styles.userRow : ""}`} key={`${message.role}-${index}`}>{message.role === "assistant" && <span className={styles.tinyAvatar}>h</span>}<p className={message.role === "user" ? styles.userMessage : styles.assistantMessage}>{message.text}</p></div>)}
+            {messages.map((message, index) => <div className={`${styles.messageRow} ${message.role === "user" ? styles.userRow : ""}`} key={`${message.role}-${index}`}>{message.role === "assistant" && <span className={styles.tinyAvatar}>h</span>}<div className={styles.messageBubble}><p className={message.role === "user" ? styles.userMessage : styles.assistantMessage}>{message.text}</p>{message.role === "assistant" && <div className={styles.messageActions}><button onClick={() => speakMessage(message.text)}>Listen</button><button onClick={() => void copyMessage(message.text, index)}>{copiedMessage === index ? "Copied" : "Copy"}</button></div>}</div></div>)}
             {sending && <div className={styles.typing}><span /><span /><span /> thinking</div>}
           </div>
+          {contextOpen && <aside className={styles.contextCard}><div><small>CONVERSATION MEMORY</small><button onClick={() => setContextOpen(false)} aria-label="Close context">×</button></div><strong>Hyber is keeping track of</strong><ul><li>{activeProduct ? `Your interest in ${activeProduct.name}` : "Your product preferences as they emerge"}</li><li>{savedProducts.length ? `${savedProducts.length} shortlisted item${savedProducts.length > 1 ? "s" : ""}` : "Nothing shortlisted yet"}</li><li>{voiceLanguage === "en-IN" ? "English conversation" : `${voiceLanguage} voice conversation`}</li></ul><button className={styles.contextAction} onClick={() => void resetConversation()}>Clear and start fresh</button></aside>}
           {activeProduct && <button className={styles.activeProduct} onClick={() => askAssistant(`Tell me more about ${activeProduct.name}`)}><span className={styles.activeProductImage} style={{ backgroundImage: `url(${imageFor(activeProduct)})` }} /><span><small>IN THIS CONVERSATION</small><strong>{activeProduct.name}</strong><em>{activeProduct.offers.priceCurrency} {activeProduct.offers.price}</em></span><span className={styles.activeArrow}>↗</span></button>}
           {error && <p className={styles.error} role="alert">{error}</p>}
           {paymentOrder && <div className={styles.paymentReady}><span className={styles.paymentIcon}>✓</span><span><strong>{paymentStatus === "paid" ? "Payment confirmed" : paymentStatus === "failed" ? "Payment failed" : "Payment ready"}</strong><small>Razorpay order {paymentOrder.id}</small></span><b>{paymentStatus || "created"}</b><button onClick={() => void openCheckout()} disabled={paymentStatus === "paid"}>Pay</button></div>}
