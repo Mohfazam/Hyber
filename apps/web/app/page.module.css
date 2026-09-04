@@ -38,11 +38,14 @@
 .activeCard .productInfo { border-bottom: 2px solid var(--coral); padding-bottom: 9px; }
 .saveButton { position: absolute; top: 9px; right: 9px; z-index: 1; display: grid; place-items: center; width: 29px; height: 29px; border: 0; color: var(--ink); background: #fbfaf6dc; font-size: 18px; cursor: pointer; }
 .saveButton:hover, .saveButton.saved { color: var(--coral); background: #fffdf9; }
+.compareButton { position: absolute; right: 43px; top: 9px; z-index: 1; display: grid; place-items: center; width: 29px; height: 29px; border: 0; color: var(--ink); background: #fbfaf6dc; font-size: 16px; cursor: pointer; }
+.compareButton:hover { color: var(--coral); background: #fffdf9; }
 .productInfo { display: flex; flex-direction: column; gap: 7px; padding: 13px 3px 0; }
 .productMeta { display: flex; align-items: center; justify-content: space-between; }
 .productCategory { color: var(--muted); font-size: 9px; }
 .productIndex { color: #aaa397; font: 9px var(--font-geist-mono), monospace; }
 .productInfo strong { min-height: 38px; font-size: 14px; line-height: 1.35; font-weight: 600; }
+.compareLink { color: var(--coral); font: 9px var(--font-geist-mono), monospace; text-transform: uppercase; }
 .productBottom { justify-content: space-between; gap: 8px; font: 11px var(--font-geist-mono), monospace; }
 .inStock { color: #4e8765; font-size: 9px; }
 .catalogPrompt { display: flex; justify-content: space-between; width: 100%; margin-top: 34px; padding: 16px 2px; border: 0; border-top: 1px solid var(--line); color: var(--ink); background: transparent; text-align: left; font: 12px var(--font-geist-mono), monospace; cursor: pointer; }
@@ -102,6 +105,31 @@
 .suggestionRow button { padding: 7px 9px; border: 1px solid var(--line); color: var(--muted); background: transparent; font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
 .suggestionRow button:hover { border-color: var(--ink); color: var(--ink); }
 .footer { justify-content: space-between; max-width: 1440px; margin: 70px auto 0; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font: 10px var(--font-geist-mono), monospace; }
+.compareTray { position: fixed; z-index: 10; right: 24px; bottom: 22px; display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 1px solid var(--ink); color: var(--cream); background: var(--ink); box-shadow: 0 14px 30px #24231f2b; animation: rise .3s ease-out; }
+.compareTray > div:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+.compareTray strong { font-size: 11px; }
+.compareTray span { color: #aaa79e; font: 9px var(--font-geist-mono), monospace; }
+.compareThumbs { display: flex; gap: 4px; }
+.compareThumbs span { width: 31px; height: 31px; background-position: center; background-size: cover; }
+.compareTray > button:not(.clearCompare) { padding: 9px 11px; border: 0; color: var(--ink); background: var(--coral); font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
+.compareTray > button:disabled { opacity: .45; cursor: not-allowed; }
+.clearCompare { border: 0; color: #aaa79e; background: transparent; font-size: 18px; cursor: pointer; }
+.compareOverlay { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 20px; background: #24231f99; animation: fade .2s ease-out; }
+.compareSheet { width: min(700px, 100%); padding: 28px; background: var(--cream); box-shadow: 0 20px 80px #24231f55; }
+.compareSheetHead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.compareSheetHead h2 { margin-top: 7px; font-size: 27px; letter-spacing: -.05em; }
+.compareSheetHead > button { border: 0; color: var(--muted); background: transparent; font-size: 24px; cursor: pointer; }
+.compareColumns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; padding-top: 22px; }
+.compareColumns article { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.compareImage { width: 100%; aspect-ratio: 1.5; background-position: center; background-size: cover; }
+.compareColumns small { color: var(--coral); font: 9px var(--font-geist-mono), monospace; text-transform: uppercase; }
+.compareColumns h3 { min-height: 38px; font-size: 15px; line-height: 1.3; }
+.compareColumns strong { font: 12px var(--font-geist-mono), monospace; }
+.compareColumns p { min-height: 55px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.compareColumns article > button { width: 100%; padding: 11px; border: 1px solid var(--ink); color: var(--ink); background: transparent; font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
+.compareColumns article > button:hover { color: var(--cream); background: var(--ink); }
 @media (max-width: 900px) { .workspace { flex-direction: column; } .chatPanel { min-width: 0; } .intro { margin-top: 80px; } }
-@media (max-width: 620px) { .page { padding: 20px 17px; } .headerMeta { font-size: 9px; } .headerMeta .headerDivider, .headerMeta span:last-child { display: none; } .intro { margin: 70px 0 45px; } .intro h1 { font-size: 54px; } .catalogTools { display: block; } .catalogSearch { margin-bottom: 10px; } .productGrid { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; } .footer { align-items: flex-start; flex-direction: column; gap: 8px; margin-top: 50px; } }
+@media (max-width: 620px) { .page { padding: 20px 17px 105px; } .headerMeta { font-size: 9px; } .headerMeta .headerDivider, .headerMeta span:last-child { display: none; } .intro { margin: 70px 0 45px; } .intro h1 { font-size: 54px; } .catalogTools { display: block; } .catalogSearch { margin-bottom: 10px; } .productGrid { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; } .footer { align-items: flex-start; flex-direction: column; gap: 8px; margin-top: 50px; } .compareTray { right: 12px; left: 12px; bottom: 12px; justify-content: space-between; } .compareTray > div:first-child { min-width: 0; } .compareSheet { padding: 20px; } .compareColumns { gap: 10px; } .compareColumns p { display: none; } }
 @keyframes pulse { 50% { transform: scale(1.35); opacity: .55; } }
+@keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }

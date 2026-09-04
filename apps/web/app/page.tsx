@@ -48,11 +48,16 @@ export default function Home() {
   const [activeProduct, setActiveProduct] = useState<Product>();
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [handsFree, setHandsFree] = useState(false);
+  const [speakReplies, setSpeakReplies] = useState(true);
+  const [voiceLanguage, setVoiceLanguage] = useState("en-IN");
   const [sortHint, setSortHint] = useState("");
   const [catalogQuery, setCatalogQuery] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("All");
   const [focusedProductSku, setFocusedProductSku] = useState("");
   const [savedSkus, setSavedSkus] = useState<string[]>([]);
+  const [compareSkus, setCompareSkus] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -117,6 +122,10 @@ export default function Home() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "The assistant could not answer.");
       setMessages((current) => [...current, { role: "assistant", text: payload.data.reply }]);
+      if (speakReplies && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(payload.data.reply));
+      }
       const resultProducts = (payload.data.selectedProducts ?? []).map(normalizeProduct);
       if (resultProducts.length > 0) {
         setActiveProduct(resultProducts[0]);
@@ -151,13 +160,19 @@ export default function Home() {
     }
 
     const recognition = new Recognition();
-    recognition.lang = "en-IN";
+    recognition.lang = voiceLanguage;
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
       setDraft(transcript);
       setVoiceListening(false);
+      if (handsFree && transcript) {
+        window.setTimeout(() => {
+          const form = document.querySelector("[data-voice-form='true']") as HTMLFormElement | null;
+          form?.requestSubmit();
+        }, 120);
+      }
     };
     recognition.onend = () => setVoiceListening(false);
     recognition.onerror = () => {
@@ -185,6 +200,11 @@ export default function Home() {
     return matchesCategory && (!query || `${product.name} ${product.category} ${product.sku}`.toLowerCase().includes(query));
   });
   const savedProducts = products.filter((product) => savedSkus.includes(product.sku));
+  const compareProducts = products.filter((product) => compareSkus.includes(product.sku));
+
+  function toggleCompare(sku: string) {
+    setCompareSkus((current) => current.includes(sku) ? current.filter((item) => item !== sku) : current.length < 2 ? [...current, sku] : [current[1], sku]);
+  }
 
   async function openCheckout() {
     if (!paymentOrder) return;
@@ -224,9 +244,10 @@ export default function Home() {
               <article className={`${styles.productCard} ${activeProduct?.sku === product.sku ? styles.activeCard : ""}`} key={product.sku}>
                 <button className={styles.productOpen} onClick={() => { setActiveProduct(product); askAssistant(`Tell me about ${product.name}, SKU ${product.sku}`); }}>
                   <span className={styles.productImage} style={{ backgroundImage: `url(${imageFor(product)})` }} aria-label={`${product.name} product image`} />
-                  <span className={styles.productInfo}><span className={styles.productMeta}><span className={styles.productCategory}>{product.category}</span><span className={styles.productIndex}>0{index + 1}</span></span><strong>{product.name}</strong><span className={styles.productBottom}><span>{product.offers.priceCurrency} {product.offers.price}</span><span className={styles.inStock}>In stock</span></span></span>
+                  <span className={styles.productInfo}><span className={styles.productMeta}><span className={styles.productCategory}>{product.category}</span><span className={styles.productIndex}>0{index + 1}</span></span><strong>{product.name}</strong><span className={styles.productBottom}><span>{product.offers.priceCurrency} {product.offers.price}</span><span className={styles.inStock}>In stock</span></span><span className={styles.compareLink}>{compareSkus.includes(product.sku) ? "In compare" : "＋ Compare"}</span></span>
                 </button>
                 <button className={`${styles.saveButton} ${savedSkus.includes(product.sku) ? styles.saved : ""}`} onClick={() => setSavedSkus((current) => current.includes(product.sku) ? current.filter((sku) => sku !== product.sku) : [...current, product.sku])} aria-label={savedSkus.includes(product.sku) ? `Remove ${product.name} from shortlist` : `Save ${product.name} to shortlist`}>{savedSkus.includes(product.sku) ? "♥" : "♡"}</button>
+                <button className={styles.compareButton} onClick={() => toggleCompare(product.sku)} aria-label={`Compare ${product.name}`}>{compareSkus.includes(product.sku) ? "✓" : "＋"}</button>
               </article>
             ))}
           </div>
@@ -244,12 +265,14 @@ export default function Home() {
           {activeProduct && <button className={styles.activeProduct} onClick={() => askAssistant(`Tell me more about ${activeProduct.name}`)}><span className={styles.activeProductImage} style={{ backgroundImage: `url(${imageFor(activeProduct)})` }} /><span><small>IN THIS CONVERSATION</small><strong>{activeProduct.name}</strong><em>{activeProduct.offers.priceCurrency} {activeProduct.offers.price}</em></span><span className={styles.activeArrow}>↗</span></button>}
           {error && <p className={styles.error} role="alert">{error}</p>}
           {paymentOrder && <div className={styles.paymentReady}><span className={styles.paymentIcon}>✓</span><span><strong>{paymentStatus === "paid" ? "Payment confirmed" : paymentStatus === "failed" ? "Payment failed" : "Payment ready"}</strong><small>Razorpay order {paymentOrder.id}</small></span><b>{paymentStatus || "created"}</b><button onClick={() => void openCheckout()} disabled={paymentStatus === "paid"}>Pay</button></div>}
-          <div className={styles.voiceMode}><span className={voiceListening ? styles.voicePulse : styles.voiceIdle} />{voiceListening ? "Listening..." : "Voice mode"}<button type="button" onClick={speakLatest} aria-label="Read latest answer aloud">Listen</button></div>
-          <form className={styles.composer} onSubmit={sendMessage}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={voiceListening ? "Speak now..." : "Ask about the collection..."} disabled={!sessionId || sending} aria-label="Message Hyber salesperson" /><button type="button" className={styles.micButton} onClick={toggleVoice} disabled={!voiceSupported || sending} aria-label={voiceListening ? "Stop voice input" : "Start voice input"}>{voiceListening ? "■" : "●"}</button><button type="submit" disabled={!sessionId || !draft.trim() || sending} aria-label="Send message">↑</button></form>
+          <div className={styles.voiceMode}><span className={voiceListening ? styles.voicePulse : styles.voiceIdle} /><span>{voiceListening ? "Listening..." : handsFree ? "Hands-free mode" : "Voice mode"}</span><span className={styles.waveform} aria-hidden="true">{[1, 2, 3, 4, 5, 6, 7].map((bar) => <i className={voiceListening ? styles.waveActive : ""} key={bar} />)}</span><select value={voiceLanguage} onChange={(event) => setVoiceLanguage(event.target.value)} aria-label="Voice language"><option value="en-IN">English</option><option value="hi-IN">Hindi</option><option value="ta-IN">Tamil</option></select><button type="button" onClick={() => setHandsFree((value) => !value)} className={handsFree ? styles.voiceToggleActive : ""}>{handsFree ? "Hands-free" : "Manual"}</button><button type="button" onClick={() => setSpeakReplies((value) => !value)}>{speakReplies ? "Sound on" : "Sound off"}</button><button type="button" onClick={speakLatest} aria-label="Read latest answer aloud">Listen</button></div>
+          <form className={styles.composer} data-voice-form="true" onSubmit={sendMessage}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={voiceListening ? "Speak now..." : handsFree ? "Hands-free is ready" : "Ask about the collection..."} disabled={!sessionId || sending} aria-label="Message Hyber salesperson" /><button type="button" className={styles.micButton} onClick={toggleVoice} disabled={!voiceSupported || sending} aria-label={voiceListening ? "Stop voice input" : "Start voice input"}>{voiceListening ? "■" : "●"}</button><button type="submit" disabled={!sessionId || !draft.trim() || sending} aria-label="Send message">↑</button></form>
           <div className={styles.suggestionRow}><button onClick={() => askAssistant("I need something for everyday use")}>Everyday</button><button onClick={() => askAssistant("What is in stock for men in size UK 9?")}>Men&apos;s UK 9</button><button onClick={() => askAssistant("What is the most interesting thing here?")}>Surprise me</button></div>
         </div>
       </section>
       <footer className={styles.footer}><span>Built for considered choices.</span><span>Every purchase is confirmed before it moves.</span></footer>
+      {compareSkus.length > 0 && <div className={styles.compareTray}><div><strong>Compare products</strong><span>{compareSkus.length} of 2 selected</span></div><div className={styles.compareThumbs}>{compareProducts.map((product) => <span key={product.sku} style={{ backgroundImage: `url(${imageFor(product)})` }} />)}</div><button onClick={() => setCompareOpen(true)} disabled={compareSkus.length < 2}>Compare now <span>↗</span></button><button className={styles.clearCompare} onClick={() => setCompareSkus([])} aria-label="Clear comparison">×</button></div>}
+      {compareOpen && <div className={styles.compareOverlay} role="dialog" aria-modal="true" aria-label="Compare products" onClick={() => setCompareOpen(false)}><div className={styles.compareSheet} onClick={(event) => event.stopPropagation()}><div className={styles.compareSheetHead}><div><p className={styles.eyebrow}>Decision view</p><h2>Which one feels right?</h2></div><button onClick={() => setCompareOpen(false)} aria-label="Close comparison">×</button></div><div className={styles.compareColumns}>{compareProducts.map((product) => <article key={product.sku}><span className={styles.compareImage} style={{ backgroundImage: `url(${imageFor(product)})` }} /><small>{product.category}</small><h3>{product.name}</h3><strong>{product.offers.priceCurrency} {product.offers.price}</strong><p>{product.extensions?.voiceDescription ?? "A considered pick from the Hyber collection."}</p><button onClick={() => { setActiveProduct(product); setFocusedProductSku(product.sku); setCompareOpen(false); }}>Ask Hyber about this ↗</button></article>)}</div></div></div>}
     </main>
   );
 }
