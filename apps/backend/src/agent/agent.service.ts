@@ -56,17 +56,29 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
 
   let response = await chat.sendMessage({ message: userMessage });
   let iterations = 0;
+  let loopNotice: string | null = null;
+  const seenToolCalls = new Set<string>();
   let paymentOrder: { id: string; amount: number; currency: string } | undefined;
   const selectedProducts: unknown[] = [];
 
   while (response.functionCalls && response.functionCalls.length > 0) {
     if (++iterations > MAX_TOOL_ITERATIONS) {
-      throw new Error('Agent exceeded max tool-call iterations � possible loop.');
+      loopNotice =
+        'I could not complete that request safely. Please rephrase it or ask about one specific product.';
+      break;
     }
 
     const responseParts: Part[] = [];
 
     for (const call of response.functionCalls) {
+      const callKey = `${call.name}:${JSON.stringify(call.args ?? {})}`;
+      if (seenToolCalls.has(callKey)) {
+        loopNotice =
+          'I got stuck repeating the same lookup. Please ask about one specific product and I will try again.';
+        break;
+      }
+      seenToolCalls.add(callKey);
+
       const result = await executeTool(call.name!, call.args ?? {}, sessionId);
 
       if (call.name === 'search_catalog' && Array.isArray(result)) {
@@ -91,10 +103,12 @@ export async function sendMessage(sessionId: string, userMessage: string): Promi
       });
     }
 
+    if (loopNotice) break;
+
     response = await chat.sendMessage({ message: responseParts });
   }
 
-  const finalText = response.text ?? '';
+  const finalText = loopNotice ?? response.text ?? '';
 
   const updatedHistory = chat.getHistory();
   await saveHistory(sessionId, updatedHistory);
