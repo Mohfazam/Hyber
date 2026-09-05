@@ -286,23 +286,23 @@
 .compareColumns article > button { width: 100%; padding: 11px; border: 1px solid var(--ink); color: var(--ink); background: transparent; font: 10px var(--font-geist-mono), monospace; cursor: pointer; }
 .compareColumns article > button:hover { color: var(--cream); background: var(--ink); }
 
-/* ── Voice Orb Overlay ── */
-.voiceOrbOverlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(251, 250, 246, 0.92); backdrop-filter: blur(20px); animation: fade 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.voiceOrbContainer { position: relative; width: 220px; height: 220px; display: flex; align-items: center; justify-content: center; }
+/* ── Voice Orb Panel ── */
+.voiceOrbOverlay { position: fixed; z-index: 50; right: 24px; bottom: 24px; display: flex; flex-direction: column; align-items: center; width: min(250px, calc(100vw - 32px)); padding: 24px 20px 18px; border: 1px solid var(--line); background: rgba(251, 250, 246, 0.96); box-shadow: 0 18px 50px rgba(36, 35, 31, 0.16); animation: rise 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.voiceOrbContainer { position: relative; width: 132px; height: 132px; display: flex; align-items: center; justify-content: center; }
 .voiceOrbCanvas { width: 100%; height: 100%; border-radius: 50%; }
-.voiceOrbCore { position: absolute; width: 120px; height: 120px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 80px rgba(232, 104, 74, 0.4), 0 0 120px rgba(232, 104, 74, 0.2); animation: orbBreathe 3s ease-in-out infinite; }
+.voiceOrbCore { position: absolute; width: 72px; height: 72px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 50px rgba(232, 104, 74, 0.4), 0 0 80px rgba(232, 104, 74, 0.2); animation: orbBreathe 3s ease-in-out infinite; }
 .voiceOrbCoreListening { animation: orbListen 0.8s ease-in-out infinite; box-shadow: 0 0 100px rgba(232, 104, 74, 0.5), 0 0 160px rgba(232, 104, 74, 0.3); }
 .voiceOrbCoreProcessing { animation: orbSpin 1.2s linear infinite; }
 @keyframes orbBreathe { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.06); opacity: 1; } }
 @keyframes orbListen { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 @keyframes orbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.voiceOrbRing { position: absolute; width: 180px; height: 180px; border-radius: 50%; border: 2px solid rgba(232, 104, 74, 0.15); animation: ringPulse 2s ease-out infinite; }
-.voiceOrbRing:nth-child(2) { animation-delay: 0.4s; width: 200px; height: 200px; }
-.voiceOrbRing:nth-child(3) { animation-delay: 0.8s; width: 220px; height: 220px; }
+.voiceOrbRing { position: absolute; width: 108px; height: 108px; border-radius: 50%; border: 2px solid rgba(232, 104, 74, 0.15); animation: ringPulse 2s ease-out infinite; }
+.voiceOrbRing:nth-child(2) { animation-delay: 0.4s; width: 122px; height: 122px; }
+.voiceOrbRing:nth-child(3) { animation-delay: 0.8s; width: 132px; height: 132px; }
 @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 0; } }
-.voiceOrbLabel { margin-top: 36px; color: var(--ink); font: 12px var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: 0.14em; animation: fade 0.5s ease 0.3s backwards; }
-.voiceOrbHint { margin-top: 10px; color: var(--muted); font-size: 12px; }
-.voiceOrbClose { position: absolute; top: 28px; right: 28px; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: var(--cream); font-size: 18px; cursor: pointer; transition: all 150ms ease; }
+.voiceOrbLabel { margin-top: 18px; color: var(--ink); font: 11px var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: 0.1em; animation: fade 0.5s ease 0.3s backwards; }
+.voiceOrbHint { margin-top: 8px; color: var(--muted); font-size: 11px; text-align: center; }
+.voiceOrbClose { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: var(--cream); font-size: 14px; cursor: pointer; transition: all 150ms ease; }
 .voiceOrbClose:hover { border-color: var(--coral); color: var(--coral); }
 
 /* ── Product Embed Row ── */
