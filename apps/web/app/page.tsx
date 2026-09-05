@@ -685,17 +685,19 @@ export default function Home() {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(payload.data.reply);
         
-        // Find a better sounding voice
+        // Prefer a natural voice in the selected language for the browser fallback.
         const voices = window.speechSynthesis.getVoices();
-        const premiumVoice = voices.find(v => 
-          v.name.includes('Natural') || 
-          v.name.includes('Neural') || 
-          v.name.includes('Google') || 
-          v.name.includes('Premium')
+        const languageCode = voiceLanguage.toLowerCase().split("-")[0] ?? "en";
+        const languageVoices = voices.filter((voice) =>
+          voice.lang.toLowerCase().startsWith(languageCode),
         );
-        if (premiumVoice) {
-          utterance.voice = premiumVoice;
-        }
+        const naturalVoice = languageVoices.find((voice) =>
+          /natural|neural|google|online/i.test(voice.name),
+        ) ?? languageVoices[0];
+        utterance.lang = voiceLanguage;
+        utterance.rate = 0.96;
+        utterance.pitch = 1;
+        if (naturalVoice) utterance.voice = naturalVoice;
         
         window.speechSynthesis.speak(utterance);
       }
@@ -815,17 +817,19 @@ export default function Home() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Find a better sounding voice
+    // Prefer a natural voice in the selected language for the browser fallback.
     const voices = window.speechSynthesis.getVoices();
-    const premiumVoice = voices.find(v => 
-      v.name.includes('Natural') || 
-      v.name.includes('Neural') || 
-      v.name.includes('Google') || 
-      v.name.includes('Premium')
+    const languageCode = voiceLanguage.toLowerCase().split("-")[0] ?? "en";
+    const languageVoices = voices.filter((voice) =>
+      voice.lang.toLowerCase().startsWith(languageCode),
     );
-    if (premiumVoice) {
-      utterance.voice = premiumVoice;
-    }
+    const naturalVoice = languageVoices.find((voice) =>
+      /natural|neural|google|online/i.test(voice.name),
+    ) ?? languageVoices[0];
+    utterance.lang = voiceLanguage;
+    utterance.rate = 0.96;
+    utterance.pitch = 1;
+    if (naturalVoice) utterance.voice = naturalVoice;
     
     window.speechSynthesis.speak(utterance);
   }

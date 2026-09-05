@@ -10,9 +10,7 @@ export async function generateTTS(text: string): Promise<string | null> {
     return null;
   }
 
-  // Voice ID for "Rachel" - a calm, professional female voice.
-  // Can be swapped for any other voice ID from ElevenLabs.
-  const voiceId = '21m00Tcm4TlvDq8ikWAM'; 
+  const voiceId = env.ELEVENLABS_VOICE_ID;
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
   try {
@@ -25,10 +23,12 @@ export async function generateTTS(text: string): Promise<string | null> {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_multilingual_v2', // good for general conversational tones
+        model_id: env.ELEVENLABS_MODEL,
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
+          stability: 0.38,
+          similarity_boost: 0.8,
+          style: 0.25,
+          use_speaker_boost: true,
         },
       }),
     });
